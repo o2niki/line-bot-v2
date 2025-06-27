@@ -316,13 +316,138 @@ async function handlePostbackEvent(event) {
       text: '📍 店舗情報\n\n住所: 東京都渋谷区...\n営業時間: 9:00-18:00\n定休日: 日曜日\n電話: 03-1234-5678\n\nアクセス: JR渋谷駅より徒歩5分'
     };
   } else if (data === 'action=contact') {
+    // 🔥 新機能: オペレータ連絡画面（電話+チャット）
+    replyMessage = {
+      type: 'flex',
+      altText: 'オペレータ連絡',
+      contents: {
+        type: 'bubble',
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            {
+              type: 'text',
+              text: '💬 オペレータ連絡',
+              weight: 'bold',
+              size: 'xl',
+              color: '#FF6B6B'
+            },
+            {
+              type: 'text',
+              text: 'お困りのことがございましたら、以下の方法でお気軽にご連絡ください',
+              size: 'md',
+              wrap: true,
+              margin: 'md'
+            }
+          ]
+        },
+        footer: {
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            {
+              type: 'button',
+              style: 'primary',
+              color: '#06c755',
+              action: {
+                type: 'uri',
+                label: '📞 電話で相談 (即座)',
+                uri: 'tel:08059372099'  // ← ここを実際の電話番号に変更
+              }
+            },
+            {
+              type: 'button',
+              style: 'secondary',
+              action: {
+                type: 'postback',
+                label: '💬 チャットで相談',
+                data: 'action=operator_chat'
+              },
+              margin: 'sm'
+            },
+            {
+              type: 'text',
+              text: '📞 電話: 営業時間内すぐに対応\n💬 チャット: オペレータが確認次第返信',
+              size: 'xs',
+              color: '#999999',
+              wrap: true,
+              margin: 'md'
+            }
+          ]
+        }
+      }
+    };
+  } else if (data === 'action=operator_chat') {
+    // 🔥 新機能: オペレータチャット開始
+    await handleOperatorChatRequest(userId);
     replyMessage = {
       type: 'text',
-      text: '❓ お問い合わせ\n\nご質問・ご要望がございましたら、お気軽にメッセージをお送りください。\n\n営業時間内にお返事いたします。\n（営業時間: 9:00-18:00）'
+      text: '💬 オペレータに接続中です...\n\nご質問内容をメッセージでお送りください。\nオペレータが確認次第、お返事いたします。\n\n※緊急の場合は📞電話でのご連絡をお願いします。'
     };
   }
   
   await sendMessage(userId, replyMessage);
+}
+
+// 🔥 新機能: オペレータチャット要求処理
+async function handleOperatorChatRequest(userId) {
+  // オペレータ（あなた）のUser IDを設定
+  const operatorUserId = 'U746a084ee0d6bfeaff6995b71278dbbb';  // ← ここにあなたのUser IDを入力
+  
+  const operatorNotification = {
+    type: 'flex',
+    altText: 'お客様からお問い合わせ',
+    contents: {
+      type: 'bubble',
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'text',
+            text: '🔔 お客様からお問い合わせ',
+            weight: 'bold',
+            size: 'xl',
+            color: '#FF0000'
+          },
+          {
+            type: 'text',
+            text: `ユーザーID: ${userId}\n\nお客様がオペレータとのチャットを希望しています。`,
+            size: 'md',
+            wrap: true,
+            margin: 'md'
+          },
+          {
+            type: 'text',
+            text: `受信日時: ${new Date().toLocaleString('ja-JP')}`,
+            size: 'sm',
+            color: '#666666',
+            margin: 'md'
+          }
+        ]
+      },
+      footer: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'text',
+            text: '対応方法:\n1. お客様に直接返信\n2. 電話で対応\n3. 後ほど対応',
+            size: 'xs',
+            color: '#999999',
+            wrap: true
+          }
+        ]
+      }
+    }
+  };
+  
+  // オペレータに通知送信
+  await sendMessage(operatorUserId, operatorNotification);
+  
+  // ログ出力
+  console.log(`オペレータチャット要求: ${userId} → ${operatorUserId}`);
 }
 
 // 担当者選択画面メッセージ
